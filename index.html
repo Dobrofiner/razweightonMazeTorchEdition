@@ -1,0 +1,116 @@
+<html lang="ru"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>maze razweighted ai</title>
+    <link rel="stylesheet" href="dobCss.css">
+    <style>
+        body {
+            background-color: var(--color-black);
+            margin: 0;
+            padding: 10px;
+        }
+        /* Точечные поправки для инпутов и кнопок, чтобы они не растягивались безумно */
+        .fixed-input {
+            width: 70px !important;
+            display: inline-block !important;
+            background-color: var(--color-black);
+            color: var(--color-white);
+            border: 1px solid var(--color-dob-hover);
+            padding: 4px;
+            border-radius: 4px;
+        }
+        .jam-section {
+            border: 1px solid var(--color-dob-hover);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: rgba(0,0,0,0.8);
+        }
+    </style>
+</head>
+<body class="dbg-black">
+    <div class="dcontainer">
+        
+        <!-- Игровой холст и лог -->
+        <div class="dcol-12 dtext-center">
+            <canvas id="game" width="640" height="480" class="canvas dbg-white"></canvas><br>
+            <div id="data" class="dcolor-white" style="text-align: left; max-height: 120px; overflow-y: auto;">Данных пока нет.</div>       
+        </div>
+
+        <script src="./dobipt.js"></script>
+
+        <div class="dcol-12 dtext-center">
+            
+            <!-- Инструменты строительства -->
+            <!-- Инструменты строительства -->
+<div class="dcontainer">
+    <!-- Блок строительства (занимает 6 колон из 12 = 48%) -->
+    <div id="inventory" class="dcol-6 jam-section dcolor-white" style="vertical-align: top;">
+        <div class="dcolor-yellow" style="font-weight: bold; margin-bottom: 6px;">Строительство:</div>
+        <div class="dcontainer">
+            <button onclick="build=0" class="dbtn dcol-5" style="margin-bottom: 4px;">🧱 стены</button>
+            <button onclick="build=1" class="dbtn dcol-5" style=" margin-bottom: 4px;">🚪👑 выход</button>
+            <button onclick="build=2" class="dbtn dcol-5">🚪🔓 вход</button>
+            <button onclick="build=4" class="dbtn dcol-5">🔦факел</button>
+            <button onclick="build=`delete`" class="dbtn dcol-5 dbg-crimson-dark" style="width: 48%;">➖удаление</button>
+            <button onclick="build=``" class="dbtn dcol-5 dbg-blue-blue" style="width: 48%;">ничего</button>
+        </div>
+    </div>
+
+    <!-- Управление игрой (занимает оставшиеся 6 колон = 48%) -->
+    <div id="start" class="dcol-6 jam-section dcolor-white" style="vertical-align: top;">
+        <div class="dcolor-blue-blue" style="font-weight: bold; margin-bottom: 6px;">Управление игрой:</div>
+        <div class="dcontainer" style="margin-bottom: 8px;">
+            <button onclick="robot.x=startRe.x;robot.y=startRe.y" class="dbtn dcol-6">Телепорт</button>
+            <button onclick="startGameFull()" class="dbtn dcol-3 dbg-light-green">Старт!</button>
+            <button onclick="stop()" class="dbtn dcol-3 dbg-crimson-dark">Пауза</button>
+            <button onclick="loadFromFile()" class="dbtn dcol-12 dbg-blue-blue" style="margin-top: 4px;">Загрузить файл</button>
+        </div>
+        <div class="dcontainer" style="margin-bottom: 6px; font-size: 0.8rem;">
+            <button onclick="robot.totalReward-=document.getElementById('pinok').valueAsNumber" class="dbtn" style="width: 70%;">Пинок (-):</button>
+            <input id="pinok" type="number" value="2" class="fixed-input" style="width: 25% !important;">
+        </div>
+        <div class="dcontainer" style="margin-bottom: 6px; font-size: 0.8rem;">
+            <button onclick="robot.userReward=document.getElementById('rewardUsr').valueAsNumber" class="dbtn" style="width: 70%;">Награда:</button>
+            <input id="rewardUsr" type="number" value="3" class="fixed-input" style="width: 25% !important;">
+        </div>
+        <div class="dcontainer" style="margin-bottom: 6px; font-size: 0.8rem;">
+            <button onclick="createMazeForUser(document.getElementById('mazeSeed').valueAsNumber)" class="dbtn" style="width: 70%;">Сид карты:</button>
+            <input id="mazeSeed" type="number" value="1" class="fixed-input" style="width: 25% !important;">
+        </div>
+        <div class="dcontainer">
+            <span style="font-size: 0.8rem;">Тема:</span>
+            <select id="theme-selector" class="fixed-input" style="width: 60% !important;" onchange="changeTheme(document.getElementById('theme-selector').selectedIndex)">
+                <option value="classic">Классическая</option>
+                <option value="handmade" selected="">Текстурная</option>
+                <option value="ai">ИИ-стиль</option>
+            </select>
+        </div>
+    </div>
+</div>
+            <!-- Настройки -->
+            <div id="settings" class="dcol-12 jam-section dcolor-white">
+                <div class="dcolor-orange" style="font-weight: bold; margin-bottom: 6px;">Настройки:</div>
+                <div class="dcontainer" style="margin-bottom: 8px; font-size: 0.85rem;">
+                    Seed: <input id="seed" type="text" value="100" class="fixed-input" style="width: 50px !important;">
+                    CPS: <input id="cps" type="number" value="20" class="fixed-input" style="width: 50px !important;">
+                    LR: <input id="lr" type="text" value="0.5" class="fixed-input" style="width: 50px !important;">
+                    Temp: <input id="temp" type="number" step="0.1" value="0.7" class="fixed-input" style="width: 50px !important;">
+                    Бонус: <input id="bonus" type="text" value="3" class="fixed-input" style="width: 50px !important;">
+                    Хардрезет: <input id="hardreset" type="checkbox">
+                    Включить ли темноту?: <input id="tma" type="checkbox" checked="true">
+                </div>
+                <div class="dcontainer">
+                    <button onclick="coolSettings()" class="dbtn dcol-2 dbg-light-green">Применить</button>
+                    <button onclick="downloadData(JSON.stringify(settings),'settings.json','application/json')" class="dbtn dcol-2">Сохр. настройки</button>
+                    <button onclick="let maze=saveOnlyMaze();downloadData(JSON.stringify(maze),'maze.json','application/json')" class="dbtn dcol-2">Сохр. лабиринт</button>
+                    <button onclick="let rob=saveOnlyRobot();downloadData(JSON.stringify(rob),'robot.json','application/json')" class="dbtn dcol-2">Сохр. робота</button>
+                    <button onclick="let full=saveRobotAndMaze();downloadData(JSON.stringify(full),'maze.json','application/json')" class="dbtn dcol-2 dbg-blue-blue">Сохр. всё</button>
+                    <button onclick="shw.show('achivs')" class="dbtn dcol-2 dbg-yellow dcolor-black">Таблица рекордов</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body></html>
